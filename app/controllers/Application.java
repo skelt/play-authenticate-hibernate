@@ -34,7 +34,6 @@ public class Application extends Controller {
 	public static final String FLASH_ERROR_KEY = "error";
 	public static final String USER_ROLE = "user";
 	
-	@Transactional
 	public Result index() {		
 		return ok(index.render());
 	}
