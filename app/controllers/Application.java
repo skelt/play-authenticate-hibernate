@@ -35,12 +35,7 @@ public class Application extends Controller {
 	public static final String USER_ROLE = "user";
 	
 	@Transactional
-	public Result index() {
-
-		SecurityRoleHome dao = new SecurityRoleHome();
-		
-		dao.hasInitialData(JPA.em());
-		
+	public Result index() {		
 		return ok(index.render());
 	}
 
