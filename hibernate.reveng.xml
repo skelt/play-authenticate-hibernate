@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-reverse-engineering PUBLIC "-//Hibernate/Hibernate Reverse Engineering DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-reverse-engineering-3.0.dtd" >
+
+<hibernate-reverse-engineering>
+  <table-filter match-catalog="playauthjpa" match-name="linked_account"/>
+  <table-filter match-catalog="playauthjpa" match-name="security_role"/>
+  <table-filter match-catalog="playauthjpa" match-name="token_action"/>
+  <table-filter match-catalog="playauthjpa" match-name="user"/>
+  <table-filter match-catalog="playauthjpa" match-name="user_has_security_role"/>
+  <table-filter match-catalog="playauthjpa" match-name="user_has_user_permission"/>
+  <table-filter match-catalog="playauthjpa" match-name="user_permission"/>
+</hibernate-reverse-engineering>
