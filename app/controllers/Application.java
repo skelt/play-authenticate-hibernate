@@ -25,8 +25,8 @@ import com.feth.play.module.pa.providers.password.UsernamePasswordAuthProvider;
 import com.feth.play.module.pa.user.AuthUser;
 
 import constants.JpaConstants;
-import dao.SecurityRoleHome;
-import dao.UserHome;
+import sessionfactory.dao.SecurityRoleHome;
+import sessionfactory.dao.UserHome;
 
 public class Application extends Controller {
 
@@ -39,15 +39,13 @@ public class Application extends Controller {
 	}
 
 	public static User getLocalUser(Session session) {
-		EntityManager em = JPA.em(JpaConstants.DB);
 		
 		AuthUser currentAuthUser = PlayAuthenticate.getUser(session);
 		
 		UserHome userDao = new UserHome();
 		
-		User localUser = userDao.findByAuthUserIdentity(currentAuthUser, em);
+		User localUser = userDao.findByAuthUserIdentity(currentAuthUser);
 		
-		em.close();
 		return localUser;
 	}
 
@@ -58,12 +56,11 @@ public class Application extends Controller {
 	}
 
 	@Restrict(@Group(Application.USER_ROLE))
-	@Transactional
 	public Result profile() {
 		User localUser = getLocalUser(session());
 		
 		UserHome userDao = new UserHome();
-		localUser = userDao.findById(localUser.getId(), JPA.em());
+		localUser = userDao.findById(localUser.getId());
 		
 		return ok(profile.render(localUser));
 	}

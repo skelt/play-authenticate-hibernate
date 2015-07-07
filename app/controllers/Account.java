@@ -11,7 +11,7 @@ import com.feth.play.module.pa.PlayAuthenticate;
 import com.feth.play.module.pa.user.AuthUser;
 
 import constants.JpaConstants;
-import dao.UserHome;
+import sessionfactory.dao.UserHome;
 import play.data.Form;
 import play.data.format.Formats.NonEmpty;
 import play.data.validation.Constraints.MinLength;
@@ -138,7 +138,7 @@ public class Account extends Controller {
 			
 			UserHome userDao = new UserHome();
 			
-			userDao.changePassword(user, new MyUsernamePasswordAuthUser(newPassword), true, em);
+			userDao.changePassword(user, new MyUsernamePasswordAuthUser(newPassword), true);
 			em.close();
 			flash(Application.FLASH_MESSAGE_KEY,
 					Messages.get("playauthenticate.change_password.success"));

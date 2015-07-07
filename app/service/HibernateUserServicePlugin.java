@@ -14,7 +14,7 @@ import com.feth.play.module.pa.service.UserServicePlugin;
 import com.google.inject.Inject;
 
 import constants.JpaConstants;
-import dao.UserHome;
+import sessionfactory.dao.UserHome;
 
 public class HibernateUserServicePlugin extends UserServicePlugin {
 
@@ -26,33 +26,25 @@ public class HibernateUserServicePlugin extends UserServicePlugin {
 	@Override
 	public Object save(AuthUser authUser) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
-		
 		UserHome userDao = new UserHome();
 		
-		boolean isLinked = userDao.existsByAuthUserIdentity(authUser, em);
+		boolean isLinked = userDao.existsByAuthUserIdentity(authUser);
 		if (!isLinked) {
-			Integer userId = userDao.create(authUser, em).getId();
-			
-			em.close();
+			Integer userId = userDao.create(authUser).getId();
 			return userId;
 		} else {
 			// we have this user already, so return null
-			em.close();
 			return null;
 		}
 	}
 
 	@Override
-	public Object getLocalIdentity(AuthUserIdentity identity) {
-		EntityManager em = JPA.em(JpaConstants.DB);
-		
+	public Object getLocalIdentity(AuthUserIdentity identity) {		
 		// For production: Caching might be a good idea here...
 		// ...and dont forget to sync the cache when users get deactivated/deleted
 		UserHome userDao = new UserHome();
 		
-		User u = userDao.findByAuthUserIdentity(identity, em);
-		em.close();
+		User u = userDao.findByAuthUserIdentity(identity);
 		if(u != null) {
 			return u.getId();
 		} else {
@@ -63,42 +55,34 @@ public class HibernateUserServicePlugin extends UserServicePlugin {
 	@Override
 	public AuthUser merge(AuthUser newUser, AuthUser oldUser) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
-		
 		UserHome userDao = new UserHome();
 		if (!oldUser.equals(newUser)) {
-			userDao.merge(oldUser, newUser, em);
+			userDao.merge(oldUser, newUser);
 		}
 		
-		em.close();
 		return oldUser;
 	}
 
 	@Override
 	public AuthUser link(AuthUser oldUser, AuthUser newUser) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
-		
 		UserHome userDao = new UserHome();
 		
-		userDao.addLinkedAccount(oldUser, newUser, em);
+		userDao.addLinkedAccount(oldUser, newUser);
 		
-		em.close();
 		return newUser;
 	}
 	
 	@Override
 	public AuthUser update(AuthUser knownUser) {
-		EntityManager em = JPA.em(JpaConstants.DB);
 		
 		// User logged in again, bump last login date
 		UserHome userDao = new UserHome();
 		
-		User u = userDao.findByAuthUserIdentity(knownUser, em);
+		User u = userDao.findByAuthUserIdentity(knownUser);
 		u.setLastLogin(new Date());
-		userDao.merge(u, em);
-
-		em.close();
+		userDao.merge(u);
+		
 		return knownUser;
 	}
 

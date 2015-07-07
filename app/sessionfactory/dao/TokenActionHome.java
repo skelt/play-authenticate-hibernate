@@ -1,4 +1,4 @@
-package reverse.dao;
+package sessionfactory.dao;
 
 // Generated Jul 7, 2015 4:46:21 PM by Hibernate Tools 4.3.1
 
@@ -16,7 +16,7 @@ import org.hibernate.LockMode;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 
-import reverse.dao.UserHome;
+import sessionfactory.dao.UserHome;
 import static org.hibernate.criterion.Example.create;
 
 /**
@@ -30,7 +30,7 @@ public class TokenActionHome {
 	
 	private final static long VERIFICATION_TIME = 7 * 24 * 3600;
 
-	private final SessionFactory sessionFactory = getSessionFactory();
+	private final SessionFactory sessionFactory = global.Global.getSessionFactory();
 
 	protected SessionFactory getSessionFactory() {
 		try {
@@ -46,10 +46,13 @@ public class TokenActionHome {
 	public void persist(TokenAction transientInstance) {
 		log.debug("persisting TokenAction instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().persist(transientInstance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("persist successful");
 		} catch (RuntimeException re) {
 			log.error("persist failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -57,10 +60,13 @@ public class TokenActionHome {
 	public void attachDirty(TokenAction instance) {
 		log.debug("attaching dirty TokenAction instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().saveOrUpdate(instance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("attach successful");
 		} catch (RuntimeException re) {
 			log.error("attach failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -68,10 +74,13 @@ public class TokenActionHome {
 	public void attachClean(TokenAction instance) {
 		log.debug("attaching clean TokenAction instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("attach successful");
 		} catch (RuntimeException re) {
 			log.error("attach failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -79,10 +88,13 @@ public class TokenActionHome {
 	public void delete(TokenAction persistentInstance) {
 		log.debug("deleting TokenAction instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().delete(persistentInstance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("delete successful");
 		} catch (RuntimeException re) {
 			log.error("delete failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -90,12 +102,15 @@ public class TokenActionHome {
 	public TokenAction merge(TokenAction detachedInstance) {
 		log.debug("merging TokenAction instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			TokenAction result = (TokenAction) sessionFactory
 					.getCurrentSession().merge(detachedInstance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("merge successful");
 			return result;
 		} catch (RuntimeException re) {
 			log.error("merge failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -103,8 +118,10 @@ public class TokenActionHome {
 	public TokenAction findById(java.lang.Integer id) {
 		log.debug("getting TokenAction instance with id: " + id);
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			TokenAction instance = (TokenAction) sessionFactory
-					.getCurrentSession().get("reverse.dao.TokenAction", id);
+					.getCurrentSession().get("models.TokenAction", id);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			if (instance == null) {
 				log.debug("get successful, no instance found");
 			} else {
@@ -113,6 +130,25 @@ public class TokenActionHome {
 			return instance;
 		} catch (RuntimeException re) {
 			log.error("get failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
+			throw re;
+		}
+	}
+	
+	public User findUserByTokenId(Integer id) {
+		try {
+			sessionFactory.getCurrentSession().beginTransaction();
+			Query query = sessionFactory.getCurrentSession().createQuery("SELECT u FROM TokenAction t JOIN t.user u WHERE t.id = :id");
+			query.setParameter("id", id);
+			
+			User instance = (User) query.uniqueResult();
+			sessionFactory.getCurrentSession().getTransaction().commit();
+			log.debug("get successful");
+			return instance;
+		}
+		catch (RuntimeException re) {
+			log.error("get failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -137,18 +173,22 @@ public class TokenActionHome {
 	
 	public TokenAction findByToken(String token, String type) {
 		try {
-			Query query = entityManager.createQuery("SELECT t FROM TokenAction t WHERE t.token = :token AND t.type = :type");
+			sessionFactory.getCurrentSession().beginTransaction();
+			Query query = sessionFactory.getCurrentSession().createQuery("SELECT t FROM TokenAction t WHERE t.token = :token AND t.type = :type");
 			query.setParameter("token", token);
 			query.setParameter("type", type);
 			
-			TokenAction instance = (TokenAction) query.getSingleResult();
+			TokenAction instance = (TokenAction) query.uniqueResult();
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("get successful");
 			return instance;
-		}catch (NoResultException e){
+		}/*catch (NoResultException e){
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			return null;
-		}
+		}*/
 		catch (RuntimeException re) {
 			log.error("get failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -164,12 +204,13 @@ public class TokenActionHome {
 			
 			List<TokenAction> tokens = (List<TokenAction>) query.list();
 			
-			sessionFactory.getCurrentSession().getTransaction().commit();
-			
 			for(TokenAction token: tokens)
 			{
-				this.delete(token);
+				//this.delete(token);
+				sessionFactory.getCurrentSession().delete(token);
 			}
+			
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			
 		} catch (RuntimeException re) {
 			sessionFactory.getCurrentSession().getTransaction().rollback();

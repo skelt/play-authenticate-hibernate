@@ -19,8 +19,8 @@ import views.html.account.signup.*;
 import com.feth.play.module.pa.PlayAuthenticate;
 
 import constants.JpaConstants;
-import dao.TokenActionHome;
-import dao.UserHome;
+import sessionfactory.dao.TokenActionHome;
+import sessionfactory.dao.UserHome;
 import static play.data.Form.form;
 
 public class Signup extends Controller {
@@ -63,7 +63,6 @@ public class Signup extends Controller {
 		return ok(password_forgot.render(form));
 	}
 
-	@Transactional
 	public Result doForgotPassword() {
 		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
 		Form<MyIdentity> filledForm = FORGOT_PASSWORD_FORM.bindFromRequest();
@@ -87,7 +86,7 @@ public class Signup extends Controller {
 			
 			UserHome userDao = new UserHome();
 
-			User user = userDao.findByEmail(email, JPA.em());
+			User user = userDao.findByEmail(email);
 			if (user != null) {
 				// yep, we have a user with this email that is active - we do
 				// not know if the user owning that account has requested this
@@ -125,18 +124,16 @@ public class Signup extends Controller {
 	 * @return
 	 */
 	private TokenAction tokenIsValid(String token, String type) {
-		EntityManager em = JPA.em(JpaConstants.DB);
 		
 		TokenAction ret = null;
 		TokenActionHome tokenDao = new TokenActionHome();
 		if (token != null && !token.trim().isEmpty()) {
-			TokenAction ta = tokenDao.findByToken(token, type, em);
+			TokenAction ta = tokenDao.findByToken(token, type);
 			if (ta != null && ta.isValid()) {
 				ret = ta;
 			}
 		}
 
-		em.close();
 		return ret;
 	}
 
@@ -151,16 +148,12 @@ public class Signup extends Controller {
 				.fill(new PasswordReset(token))));
 	}
 
-	//@Transactional
 	public Result doResetPassword() {
-		
-		EntityManager em = JPA.em(JpaConstants.DB);
 		
 		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
 		Form<PasswordReset> filledForm = PASSWORD_RESET_FORM
 				.bindFromRequest();
 		if (filledForm.hasErrors()) {
-			em.close();
 			return badRequest(password_reset.render(filledForm));
 		} else {
 			String token = filledForm.get().token;
@@ -168,23 +161,22 @@ public class Signup extends Controller {
 
 			TokenAction ta = tokenIsValid(token, "PASSWORD_RESET");
 			if (ta == null) {
-				em.close();
 				return badRequest(no_token_or_invalid.render());
 			}
 			
 			TokenActionHome tokenDao = new TokenActionHome();
 			
-			ta = tokenDao.findById(ta.getId(), em);
+			User user = tokenDao.findUserByTokenId(ta.getId());
 			
-			String email = ta.getUser().getEmail();
+			String email = user.getEmail();
 			try {
 				// Pass true for the second parameter if you want to
 				// automatically create a password and the exception never to
 				// happen
 				UserHome userDao = new UserHome();
 				
-				userDao.resetPassword(ta.getUser(), new MyUsernamePasswordAuthUser(newPassword),
-						false, em);
+				userDao.resetPassword(user, new MyUsernamePasswordAuthUser(newPassword),
+						false);
 			} catch (RuntimeException re) {
 				flash(Application.FLASH_MESSAGE_KEY,
 						Messages.get("playauthenticate.reset_password.message.no_password_account"));
@@ -192,7 +184,6 @@ public class Signup extends Controller {
 			boolean login = MyUsernamePasswordAuthProvider.getProvider()
 					.isLoginAfterPasswordReset();
 			
-			em.close();
 			if (login) {
 				// automatically log in
 				flash(Application.FLASH_MESSAGE_KEY,
@@ -219,29 +210,24 @@ public class Signup extends Controller {
 		return ok(exists.render());
 	}
 
-	//@Transactional
 	public Result verify(String token) {
 		
-		//TODO work out why @Transactional doesn't like being used more than once
-		EntityManager em = JPA.em(JpaConstants.DB);
 		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
 		TokenAction ta = tokenIsValid(token, "EMAIL_VERIFICATION");
 		if (ta == null) {
-			em.close();
 			return badRequest(no_token_or_invalid.render());
 		}
 		TokenActionHome tokenDao = new TokenActionHome();
 		
-		ta = tokenDao.findById(ta.getId(), em);
+		User user = tokenDao.findUserByTokenId(ta.getId());
 		
-		String email = ta.getUser().getEmail();
+		String email = user.getEmail();
 		
 		UserHome userDao = new UserHome();
-		userDao.verify(ta.getUser(), em);
+		userDao.verify(user);
 		flash(Application.FLASH_MESSAGE_KEY,
 				Messages.get("playauthenticate.verify_email.success", email));
 		
-		em.close();
 		if (Application.getLocalUser(session()) != null) {
 			return redirect(routes.Application.index());
 		} else {

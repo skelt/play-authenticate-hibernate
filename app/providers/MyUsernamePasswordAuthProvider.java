@@ -8,8 +8,8 @@ import com.google.inject.Inject;
 
 import constants.JpaConstants;
 import controllers.routes;
-import dao.TokenActionHome;
-import dao.UserHome;
+import sessionfactory.dao.TokenActionHome;
+import sessionfactory.dao.UserHome;
 import models.LinkedAccount;
 import models.TokenAction;
 import models.User;
@@ -133,49 +133,40 @@ public class MyUsernamePasswordAuthProvider
 	@Override
 	protected com.feth.play.module.pa.providers.password.UsernamePasswordAuthProvider.SignupResult signupUser(MyUsernamePasswordAuthUser user) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
-		
 		UserHome userDao = new UserHome();
 		
-		User u = userDao.findByUsernamePasswordIdentity(user, em);
+		User u = userDao.findByUsernamePasswordIdentity(user);
 		if (u != null) {
 			if (u.getEmailValidated()) {
 				// This user exists, has its email validated and is active
-				em.close();
 				return SignupResult.USER_EXISTS;
 			} else {
 				// this user exists, is active but has not yet validated its
 				// email
-				em.close();
 				return SignupResult.USER_EXISTS_UNVERIFIED;
 			}
 		}
 		// The user either does not exist or is inactive - create a new one
 		@SuppressWarnings("unused")
-		User newUser = userDao.create(user, em);
+		User newUser = userDao.create(user);
 		// Usually the email should be verified before allowing login, however
 		// if you return
 		// return SignupResult.USER_CREATED;
 		// then the user gets logged in directly
 		
-		em.close();
 		return SignupResult.USER_CREATED_UNVERIFIED;
 	}
 
 	@Override
 	protected com.feth.play.module.pa.providers.password.UsernamePasswordAuthProvider.LoginResult loginUser(MyLoginUsernamePasswordAuthUser authUser) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
-		
 		UserHome userDao = new UserHome();
 		
-		User u = userDao.findByUsernamePasswordIdentity(authUser, em);
+		User u = userDao.findByUsernamePasswordIdentity(authUser);
 		if (u == null) {
-			em.close();
 			return LoginResult.NOT_FOUND;
 		} else {
 			if (!u.getEmailValidated()) {
-				em.close();
 				return LoginResult.USER_UNVERIFIED;
 			} else {
 				for (LinkedAccount acc : u.getLinkedAccounts()) {
@@ -183,19 +174,16 @@ public class MyUsernamePasswordAuthProvider
 						if (authUser.checkPassword(acc.getProviderUserId(),
 								authUser.getPassword())) {
 							// Password was correct
-							em.close();
 							return LoginResult.USER_LOGGED_IN;
 						} else {
 							// if you don't return here,
 							// you would allow the user to have
 							// multiple passwords defined
 							// usually we don't want this
-							em.close();
 							return LoginResult.WRONG_PASSWORD;
 						}
 					}
 				}
-				em.close();
 				return LoginResult.WRONG_PASSWORD;
 			}
 		}
@@ -268,39 +256,33 @@ public class MyUsernamePasswordAuthProvider
 
 	@Override
 	protected String generateVerificationRecord(MyUsernamePasswordAuthUser user) {
-		EntityManager em = JPA.em(JpaConstants.DB);
 		
 		UserHome userDao = new UserHome();
 		
-		String verf = generateVerificationRecord(userDao.findByAuthUserIdentity(user, em));
+		String verf = generateVerificationRecord(userDao.findByAuthUserIdentity(user));
 		
-		em.close();
 		return verf;
 	}
 
 	protected String generateVerificationRecord(User user) {
-		EntityManager em = JPA.em(JpaConstants.DB);
 		
 		String token = generateToken();
 		// Do database actions, etc.
 		TokenActionHome tokenDao = new TokenActionHome();
 		
-		tokenDao.create("EMAIL_VERIFICATION", token, user, em);
+		tokenDao.create("EMAIL_VERIFICATION", token, user);
 		
-		em.close();
 		return token;
 	}
 
 	protected String generatePasswordResetRecord(User u) {
-		EntityManager em = JPA.em(JpaConstants.DB);
 		
 		String token = generateToken();
 		
 		TokenActionHome tokenDao = new TokenActionHome();
 		
-		tokenDao.create("PASSWORD_RESET", token, u, em);
+		tokenDao.create("PASSWORD_RESET", token, u);
 		
-		em.close();
 		return token;
 	}
 

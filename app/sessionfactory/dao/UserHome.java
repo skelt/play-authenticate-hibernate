@@ -1,4 +1,4 @@
-package reverse.dao;
+package sessionfactory.dao;
 
 // Generated Jul 7, 2015 4:46:21 PM by Hibernate Tools 4.3.1
 
@@ -15,6 +15,7 @@ import models.User;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.LockMode;
+import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 
 import com.feth.play.module.pa.providers.password.UsernamePasswordAuthUser;
@@ -24,9 +25,9 @@ import com.feth.play.module.pa.user.EmailIdentity;
 import com.feth.play.module.pa.user.FirstLastNameIdentity;
 import com.feth.play.module.pa.user.NameIdentity;
 
-import reverse.dao.LinkedAccountHome;
-import reverse.dao.SecurityRoleHome;
-import reverse.dao.TokenActionHome;
+import sessionfactory.dao.LinkedAccountHome;
+import sessionfactory.dao.SecurityRoleHome;
+import sessionfactory.dao.TokenActionHome;
 import static org.hibernate.criterion.Example.create;
 
 /**
@@ -38,7 +39,7 @@ public class UserHome {
 
 	private static final Log log = LogFactory.getLog(UserHome.class);
 
-	private final SessionFactory sessionFactory = getSessionFactory();
+	private final SessionFactory sessionFactory = global.Global.getSessionFactory();
 
 	protected SessionFactory getSessionFactory() {
 		try {
@@ -54,10 +55,13 @@ public class UserHome {
 	public void persist(User transientInstance) {
 		log.debug("persisting User instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().persist(transientInstance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("persist successful");
 		} catch (RuntimeException re) {
 			log.error("persist failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -65,10 +69,13 @@ public class UserHome {
 	public void attachDirty(User instance) {
 		log.debug("attaching dirty User instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().saveOrUpdate(instance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("attach successful");
 		} catch (RuntimeException re) {
 			log.error("attach failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -76,10 +83,13 @@ public class UserHome {
 	public void attachClean(User instance) {
 		log.debug("attaching clean User instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("attach successful");
 		} catch (RuntimeException re) {
 			log.error("attach failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -87,10 +97,13 @@ public class UserHome {
 	public void delete(User persistentInstance) {
 		log.debug("deleting User instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().delete(persistentInstance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("delete successful");
 		} catch (RuntimeException re) {
 			log.error("delete failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -98,12 +111,15 @@ public class UserHome {
 	public User merge(User detachedInstance) {
 		log.debug("merging User instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			User result = (User) sessionFactory.getCurrentSession().merge(
 					detachedInstance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("merge successful");
 			return result;
 		} catch (RuntimeException re) {
 			log.error("merge failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -111,8 +127,10 @@ public class UserHome {
 	public User findById(java.lang.Integer id) {
 		log.debug("getting User instance with id: " + id);
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			User instance = (User) sessionFactory.getCurrentSession().get(
-					"reverse.dao.User", id);
+					"models.User", id);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			if (instance == null) {
 				log.debug("get successful, no instance found");
 			} else {
@@ -121,6 +139,7 @@ public class UserHome {
 			return instance;
 		} catch (RuntimeException re) {
 			log.error("get failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -175,23 +194,23 @@ public class UserHome {
 		{
 			return true;
 		}
-		//return exp.findRowCount() > 0;
 	}
 	
 	public User findByUsernamePasswordIdentity(UsernamePasswordAuthUser identity) {
 		
 		try {
-			Query query = entityManager.createQuery("SELECT DISTINCT u FROM LinkedAccount l JOIN l.user u WHERE l.providerKey = :pKey AND u.email = :email AND u.active = true");
+			sessionFactory.getCurrentSession().beginTransaction();
+		    Query query = sessionFactory.getCurrentSession().createQuery("SELECT DISTINCT u FROM LinkedAccount l JOIN l.user u WHERE l.providerKey = :pKey AND u.email = :email AND u.active = true");
 			query.setParameter("pKey", identity.getProvider());
 			query.setParameter("email", identity.getEmail());
 			
-			User user = (User) query.getSingleResult();
+			User user = (User) query.uniqueResult();
+			sessionFactory.getCurrentSession().getTransaction().commit();		
 			
 			return user;
-		} catch (NoResultException nr) {
-			return null;
 		} catch (RuntimeException re) {
 			log.error("get failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		} 
 	}
@@ -199,14 +218,17 @@ public class UserHome {
     public User findByEmail(String email) {
 		
 		try {
-			Query query = entityManager.createQuery("SELECT DISTINCT u FROM User u WHERE u.email = :email AND u.active = true");
+			sessionFactory.getCurrentSession().beginTransaction();
+			Query query = sessionFactory.getCurrentSession().createQuery("SELECT DISTINCT u FROM User u WHERE u.email = :email AND u.active = true");
 			query.setParameter("email", email);
 			
-			User user = (User) query.getSingleResult();
+			User user = (User) query.uniqueResult();
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			
 			return user;
 		} catch (RuntimeException re) {
 			log.error("get failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -214,18 +236,19 @@ public class UserHome {
 	private User getAuthUserFind(AuthUserIdentity identity) {
 		
 		try {
-			Query query = entityManager.createQuery("SELECT DISTINCT u FROM LinkedAccount l JOIN l.user u WHERE l.providerKey = :pKey AND l.providerUserId = :userId AND u.active = true");
+			sessionFactory.getCurrentSession().beginTransaction();
+			Query query = sessionFactory.getCurrentSession().createQuery("SELECT DISTINCT u FROM LinkedAccount l JOIN l.user u WHERE l.providerKey = :pKey AND l.providerUserId = :userId AND u.active = true");
 			query.setParameter("pKey", identity.getProvider());
 			query.setParameter("userId", identity.getId());
 			
-			User user = (User) query.getSingleResult();
+			User user = (User) query.uniqueResult();
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			
 			return user;
-		}catch (NoResultException e) {
-			return null;
 		}
 		catch (RuntimeException re) {
 			log.error("get failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -297,11 +320,11 @@ public class UserHome {
 	public void verify(User unverified) {
 		// You might want to wrap this into a transaction
 		unverified.setEmailValidated(true);
-		this.merge(unverified, entityManager);
+		this.merge(unverified);
 		
 		TokenActionHome tokenDao = new TokenActionHome();
 		
-		tokenDao.deleteByUser(unverified, "EMAIL_VERIFICATION", entityManager);
+		tokenDao.deleteByUser(unverified, "EMAIL_VERIFICATION");
 	}
 	
 	public void merge(User currentUser, User otherUser) {

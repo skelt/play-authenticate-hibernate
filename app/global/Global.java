@@ -12,7 +12,7 @@ import play.Application;
 import play.GlobalSettings;
 import play.db.jpa.JPA;
 import play.mvc.Call;
-import reverse.dao.SecurityRoleHome;
+import sessionfactory.dao.SecurityRoleHome;
 
 import com.feth.play.module.pa.PlayAuthenticate;
 import com.feth.play.module.pa.PlayAuthenticate.Resolver;

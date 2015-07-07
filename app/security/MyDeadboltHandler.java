@@ -18,7 +18,7 @@ import com.feth.play.module.pa.PlayAuthenticate;
 import com.feth.play.module.pa.user.AuthUserIdentity;
 
 import constants.JpaConstants;
-import dao.UserHome;
+import sessionfactory.dao.UserHome;
 
 public class MyDeadboltHandler extends AbstractDeadboltHandler {
 
@@ -52,14 +52,12 @@ public class MyDeadboltHandler extends AbstractDeadboltHandler {
 
 	@Override
 	public Promise<Optional<Subject>> getSubject(Http.Context context) {
-		EntityManager em = JPA.em(JpaConstants.DB);
 		
 		AuthUserIdentity u = PlayAuthenticate.getUser(context);
 		
 		UserHome userDao = new UserHome();
-		User user = userDao.findByAuthUserIdentity(u, em);
+		User user = userDao.findByAuthUserIdentity(u);
 		
-		em.close();
 		// Caching might be a good idea here
 		return F.Promise.pure(Optional.ofNullable((Subject)user));
 	}

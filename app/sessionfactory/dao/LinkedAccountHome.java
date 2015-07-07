@@ -1,4 +1,4 @@
-package reverse.dao;
+package sessionfactory.dao;
 
 // Generated Jul 7, 2015 4:46:21 PM by Hibernate Tools 4.3.1
 
@@ -28,7 +28,7 @@ public class LinkedAccountHome {
 
 	private static final Log log = LogFactory.getLog(LinkedAccountHome.class);
 
-	private final SessionFactory sessionFactory = getSessionFactory();
+	private final SessionFactory sessionFactory = global.Global.getSessionFactory();
 
 	protected SessionFactory getSessionFactory() {
 		try {
@@ -44,10 +44,13 @@ public class LinkedAccountHome {
 	public void persist(LinkedAccount transientInstance) {
 		log.debug("persisting LinkedAccount instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().persist(transientInstance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("persist successful");
 		} catch (RuntimeException re) {
 			log.error("persist failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -55,10 +58,13 @@ public class LinkedAccountHome {
 	public void attachDirty(LinkedAccount instance) {
 		log.debug("attaching dirty LinkedAccount instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().saveOrUpdate(instance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("attach successful");
 		} catch (RuntimeException re) {
 			log.error("attach failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -66,10 +72,13 @@ public class LinkedAccountHome {
 	public void attachClean(LinkedAccount instance) {
 		log.debug("attaching clean LinkedAccount instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("attach successful");
 		} catch (RuntimeException re) {
 			log.error("attach failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -77,10 +86,13 @@ public class LinkedAccountHome {
 	public void delete(LinkedAccount persistentInstance) {
 		log.debug("deleting LinkedAccount instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			sessionFactory.getCurrentSession().delete(persistentInstance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("delete successful");
 		} catch (RuntimeException re) {
 			log.error("delete failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -88,12 +100,15 @@ public class LinkedAccountHome {
 	public LinkedAccount merge(LinkedAccount detachedInstance) {
 		log.debug("merging LinkedAccount instance");
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			LinkedAccount result = (LinkedAccount) sessionFactory
 					.getCurrentSession().merge(detachedInstance);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			log.debug("merge successful");
 			return result;
 		} catch (RuntimeException re) {
 			log.error("merge failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
@@ -101,8 +116,10 @@ public class LinkedAccountHome {
 	public LinkedAccount findById(java.lang.Integer id) {
 		log.debug("getting LinkedAccount instance with id: " + id);
 		try {
+			sessionFactory.getCurrentSession().beginTransaction();
 			LinkedAccount instance = (LinkedAccount) sessionFactory
-					.getCurrentSession().get("reverse.dao.LinkedAccount", id);
+					.getCurrentSession().get("models.LinkedAccount", id);
+			sessionFactory.getCurrentSession().getTransaction().commit();
 			if (instance == null) {
 				log.debug("get successful, no instance found");
 			} else {
@@ -111,6 +128,7 @@ public class LinkedAccountHome {
 			return instance;
 		} catch (RuntimeException re) {
 			log.error("get failed", re);
+			sessionFactory.getCurrentSession().getTransaction().rollback();
 			throw re;
 		}
 	}
