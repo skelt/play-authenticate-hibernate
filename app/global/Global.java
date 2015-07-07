@@ -1,8 +1,18 @@
+package global;
 import java.util.Arrays;
 
 import javax.persistence.EntityManager;
 
 import models.SecurityRole;
+
+import org.hibernate.SessionFactory;
+import org.hibernate.jpa.HibernateEntityManagerFactory;
+
+import play.Application;
+import play.GlobalSettings;
+import play.db.jpa.JPA;
+import play.mvc.Call;
+import reverse.dao.SecurityRoleHome;
 
 import com.feth.play.module.pa.PlayAuthenticate;
 import com.feth.play.module.pa.PlayAuthenticate.Resolver;
@@ -11,16 +21,22 @@ import com.feth.play.module.pa.exceptions.AuthException;
 
 import constants.JpaConstants;
 import controllers.routes;
-import dao.SecurityRoleHome;
-import play.Application;
-import play.GlobalSettings;
-import play.db.jpa.JPA;
-import play.mvc.Call;
 
 public class Global extends GlobalSettings {
 
+	private static SessionFactory sessionFactory;
+	
+	public static SessionFactory getSessionFactory(){
+		return sessionFactory;
+	}
+
 	@Override
 	public void onStart(Application app) {
+		
+		HibernateEntityManagerFactory emFactory = (HibernateEntityManagerFactory) JPA.em(JpaConstants.DB).getEntityManagerFactory();
+		
+		sessionFactory = emFactory.getSessionFactory();
+		
 		PlayAuthenticate.setResolver(new Resolver() {
 
 			@Override
@@ -73,6 +89,14 @@ public class Global extends GlobalSettings {
 
 		initialData();
 	}
+	
+	
+
+	@Override
+	public void onStop(Application app) {
+		sessionFactory.close();
+		super.onStop(app);
+	}
 
 	private void initialData() {
 		
@@ -80,12 +104,12 @@ public class Global extends GlobalSettings {
 		
 		SecurityRoleHome dao = new SecurityRoleHome();
 		
-		if (!dao.hasInitialData(em)) {
+		if (!dao.hasInitialData()) {
 			for (String roleName : Arrays
 					.asList(controllers.Application.USER_ROLE)) {
 				SecurityRole role = new SecurityRole();
 				role.setRoleName(roleName);
-				dao.persist(role, em);
+				dao.persist(role);
 			}
 		}
 		

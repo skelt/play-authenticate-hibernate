@@ -1,0 +1,5 @@
+sessionFactory.getCurrentSession().beginTransaction();
+
+sessionFactory.getCurrentSession().getTransaction().commit();
+
+sessionFactory.getCurrentSession().getTransaction().rollback();
