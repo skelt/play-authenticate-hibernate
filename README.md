@@ -12,8 +12,7 @@ play authenticate: 0.7.0-SNAPSHOT
 MySQL
 
 This implementation does not use a managed entity manager, the developer is responsable
-for closing db connections unless using @Transactional in controllers.  There are some compatibility issues using this 
-implementation with @Transactional, deadbolt and the hibernate dao objects.  So its best advised to avoid using @Transactional.
+for closing db connections unless using @Transactional in controllers.
 
 So every time you use 
 
