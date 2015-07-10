@@ -56,14 +56,16 @@ public class Application extends Controller {
 	}
 
 	@Restrict(@Group(Application.USER_ROLE))
-	@Transactional
 	public Result profile() {
+		
+		EntityManager em = JPA.em(JpaConstants.DB);
 	
 		User localUser = getLocalUser(session());
 		
 		UserHome userDao = new UserHome();
-		localUser = userDao.findById(localUser.getId(), JPA.em());
+		localUser = userDao.findById(localUser.getId(), em);
 		
+		em.close();
 		return ok(profile.render(localUser));
 	}
 
