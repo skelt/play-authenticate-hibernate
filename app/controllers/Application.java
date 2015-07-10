@@ -9,7 +9,6 @@ import models.User;
 import play.Routes;
 import play.data.Form;
 import play.db.jpa.JPA;
-import play.db.jpa.Transactional;
 import play.mvc.*;
 import play.mvc.Http.Session;
 import providers.MyUsernamePasswordAuthProvider;
