@@ -1,5 +1,6 @@
 SCET Play Template
 
+[http://scet.co](http://scet.co)
 
 Create a database using phpmyadmin
 
