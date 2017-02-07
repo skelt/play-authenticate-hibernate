@@ -2,17 +2,17 @@ package dao;
 
 // Generated Jul 4, 2015 5:57:00 PM by Hibernate Tools 4.3.1
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
-import javax.persistence.PersistenceContext;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 import models.SecurityRole;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import play.db.jpa.JPA;
+import play.Logger;
 
 /**
  * Home object for domain model class SecurityRole.
@@ -20,8 +20,6 @@ import play.db.jpa.JPA;
  * @author Hibernate Tools
  */
 public class SecurityRoleHome {
-
-	private static final Log log = LogFactory.getLog(SecurityRoleHome.class);
 
 	public void persist(SecurityRole transientInstance, EntityManager entityManager) {
 		
@@ -77,13 +75,31 @@ public class SecurityRoleHome {
 	}
 
 	public SecurityRole findById(Integer id, EntityManager entityManager) {
-		log.debug("getting SecurityRole instance with id: " + id);
+		Logger.debug("getting SecurityRole instance with id: " + id);
 		try {
 			SecurityRole instance = entityManager.find(SecurityRole.class, id);
-			log.debug("get successful");
+			Logger.debug("get successful");
 			return instance;
 		} catch (RuntimeException re) {
-			log.error("get failed", re);
+			Logger.error("get failed", re);
+			throw re;
+		}
+	}
+	
+	public Set<SecurityRole> findByIds(List<Integer> ids, EntityManager entityManager) {
+		//log.debug("getting SecurityRole instance with id: " + id);
+		try {
+			Query query = entityManager.createQuery("SELECT r FROM SecurityRole r WHERE r.id IN :ids");
+			query.setParameter("ids", ids);
+			
+			Set<SecurityRole> instance = new HashSet<SecurityRole>(query.getResultList());
+			Logger.debug("get successful");
+			return instance;
+		}catch(NoResultException e){
+			Logger.info("role not found");
+			return null;			
+		}catch (Exception re) {
+			Logger.error("get failed", re);
 			throw re;
 		}
 	}
@@ -94,10 +110,13 @@ public class SecurityRoleHome {
 			query.setParameter("name", name);
 			
 			SecurityRole instance = (SecurityRole) query.getSingleResult();
-			log.debug("get successful");
+			Logger.debug("get successful");
 			return instance;
-		} catch (RuntimeException re) {
-			log.error("get failed", re);
+		}catch(NoResultException e){
+			Logger.info("role not found");
+			return null;			
+		}catch (Exception re) {
+			Logger.error("get failed", re);
 			throw re;
 		}
 	}
@@ -119,7 +138,7 @@ public class SecurityRoleHome {
 			}
 			
 		} catch (RuntimeException re) {
-			log.error("get failed", re);
+			Logger.error("get failed", re);
 			throw re;
 		}
 	}

@@ -8,15 +8,11 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import models.SecurityRole;
 import models.TokenAction;
 import models.User;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import play.Logger;
 
 /**
  * Home object for domain model class TokenAction.
@@ -24,10 +20,8 @@ import org.apache.commons.logging.LogFactory;
  * @author Hibernate Tools
  */
 public class TokenActionHome {
-
-	private static final Log log = LogFactory.getLog(TokenActionHome.class);
 	
-	private final static long VERIFICATION_TIME = 7 * 24 * 3600;
+	private final static long VERIFICATION_TIME = 7L * 24 * 3600;
 
 	public void persist(TokenAction transientInstance, EntityManager entityManager) {
 		
@@ -83,13 +77,13 @@ public class TokenActionHome {
 	}
 
 	public TokenAction findById(Integer id, EntityManager entityManager) {
-		log.debug("getting TokenAction instance with id: " + id);
+		Logger.debug("getting TokenAction instance with id: " + id);
 		try {
 			TokenAction instance = entityManager.find(TokenAction.class, id);
-			log.debug("get successful");
+			Logger.debug("get successful");
 			return instance;
 		} catch (RuntimeException re) {
-			log.error("get failed", re);
+			Logger.error("get failed", re);
 			throw re;
 		}
 	}
@@ -119,13 +113,14 @@ public class TokenActionHome {
 			query.setParameter("type", type.toLowerCase());
 			
 			TokenAction instance = (TokenAction) query.getSingleResult();
-			log.debug("get successful");
+			Logger.debug("get successful");
 			return instance;
 		}catch (NoResultException e){
+			Logger.info("token not found");
 			return null;
 		}
-		catch (RuntimeException re) {
-			log.error("get failed", re);
+		catch (Exception re) {
+			Logger.error("get failed", re);
 			throw re;
 		}
 	}
@@ -144,8 +139,11 @@ public class TokenActionHome {
 				this.remove(token, entityManager);
 			}
 			
-		} catch (RuntimeException re) {
-			log.error("get failed", re);
+		}catch (NoResultException e){
+			Logger.info("token not found");
+		}
+		catch (Exception re) {
+			Logger.error("get failed", re);
 			throw re;
 		}
 	}

@@ -1,6 +1,15 @@
 package providers;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import javax.persistence.EntityManager;
+
 import com.feth.play.module.mail.Mailer.Mail.Body;
+import com.feth.play.module.mail.Mailer.MailerFactory;
 import com.feth.play.module.pa.PlayAuthenticate;
 import com.feth.play.module.pa.providers.password.UsernamePasswordAuthProvider;
 import com.feth.play.module.pa.providers.password.UsernamePasswordAuthUser;
@@ -11,29 +20,20 @@ import controllers.routes;
 import dao.TokenActionHome;
 import dao.UserHome;
 import models.LinkedAccount;
-import models.TokenAction;
 import models.User;
-import play.Application;
 import play.Logger;
 import play.data.Form;
+import play.data.FormFactory;
 import play.data.validation.Constraints.Email;
 import play.data.validation.Constraints.MinLength;
 import play.data.validation.Constraints.Required;
-import play.db.jpa.JPA;
+import play.db.jpa.JPAApi;
 import play.i18n.Lang;
 import play.i18n.Messages;
+import play.i18n.MessagesApi;
+import play.inject.ApplicationLifecycle;
 import play.mvc.Call;
 import play.mvc.Http.Context;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import javax.persistence.EntityManager;
-
-import static play.data.Form.form;
 
 public class MyUsernamePasswordAuthProvider
 		extends
@@ -55,11 +55,6 @@ public class MyUsernamePasswordAuthProvider
 		needed.add(SETTING_KEY_PASSWORD_RESET_LINK_SECURE);
 		needed.add(SETTING_KEY_LINK_LOGIN_AFTER_PASSWORD_RESET);
 		return needed;
-	}
-
-	public static MyUsernamePasswordAuthProvider getProvider() {
-		return (MyUsernamePasswordAuthProvider) PlayAuthenticate
-				.getProvider(UsernamePasswordAuthProvider.PROVIDER_KEY);
 	}
 
 	public static class MyIdentity {
@@ -114,26 +109,34 @@ public class MyUsernamePasswordAuthProvider
 		}
 	}
 
-	public static final Form<MySignup> SIGNUP_FORM = form(MySignup.class);
-	public static final Form<MyLogin> LOGIN_FORM = form(MyLogin.class);
+	public final Form<MySignup> SIGNUP_FORM;
+	public final Form<MyLogin> LOGIN_FORM;
+	private final JPAApi jpaApi;
+	private final MessagesApi msg;
 
 	@Inject
-	public MyUsernamePasswordAuthProvider(Application app) {
-		super(app);
+	public MyUsernamePasswordAuthProvider(final PlayAuthenticate auth, final FormFactory formFactory,
+										  final ApplicationLifecycle lifecycle, MailerFactory mailerFactory, final JPAApi api, MessagesApi msg) {
+		super(auth, lifecycle, mailerFactory);
+
+		this.SIGNUP_FORM = formFactory.form(MySignup.class);
+		this.LOGIN_FORM = formFactory.form(MyLogin.class);
+		this.jpaApi = api;
+		this.msg = msg;
 	}
 
-	protected Form<MySignup> getSignupForm() {
+	public Form<MySignup> getSignupForm() {
 		return SIGNUP_FORM;
 	}
 
-	protected Form<MyLogin> getLoginForm() {
+	public Form<MyLogin> getLoginForm() {
 		return LOGIN_FORM;
 	}
 
 	@Override
 	protected com.feth.play.module.pa.providers.password.UsernamePasswordAuthProvider.SignupResult signupUser(MyUsernamePasswordAuthUser user) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		UserHome userDao = new UserHome();
 		
@@ -165,7 +168,7 @@ public class MyUsernamePasswordAuthProvider
 	@Override
 	protected com.feth.play.module.pa.providers.password.UsernamePasswordAuthProvider.LoginResult loginUser(MyLoginUsernamePasswordAuthUser authUser) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		UserHome userDao = new UserHome();
 		
@@ -180,8 +183,8 @@ public class MyUsernamePasswordAuthProvider
 			} else {
 				for (LinkedAccount acc : u.getLinkedAccounts()) {
 					if (getKey().equals(acc.getProviderKey())) {
-						if (authUser.checkPassword(acc.getProviderUserId(),
-								authUser.getPassword())) {
+						if (authUser.checkPassword(acc.getProviderUserId(), authUser.getPassword())) {
+						//if (authUser.checkPassword(acc.getProviderUserId(), authUser.getPassword())) {
 							// Password was correct
 							em.close();
 							return LoginResult.USER_LOGGED_IN;
@@ -230,14 +233,14 @@ public class MyUsernamePasswordAuthProvider
 
 	@Override
 	protected String getVerifyEmailMailingSubject(MyUsernamePasswordAuthUser user, Context ctx) {
-		return Messages.get("playauthenticate.password.verify_signup.subject");
+		return this.msg.preferred(ctx.request()).at("playauthenticate.password.verify_signup.subject");
 	}
 
 	@Override
 	protected String onLoginUserNotFound(Context context) {
 		context.flash()
 				.put(controllers.Application.FLASH_ERROR_KEY,
-						Messages.get("playauthenticate.password.login.unknown_user_or_pw"));
+						this.msg.preferred(context.request()).at("playauthenticate.password.login.unknown_user_or_pw"));
 		return super.onLoginUserNotFound(context);
 	}
 
@@ -268,7 +271,7 @@ public class MyUsernamePasswordAuthProvider
 
 	@Override
 	protected String generateVerificationRecord(MyUsernamePasswordAuthUser user) {
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		UserHome userDao = new UserHome();
 		
@@ -279,7 +282,7 @@ public class MyUsernamePasswordAuthProvider
 	}
 
 	protected String generateVerificationRecord(User user) {
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		String token = generateToken();
 		// Do database actions, etc.
@@ -292,7 +295,7 @@ public class MyUsernamePasswordAuthProvider
 	}
 
 	protected String generatePasswordResetRecord(User u) {
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		String token = generateToken();
 		
@@ -305,7 +308,7 @@ public class MyUsernamePasswordAuthProvider
 	}
 
 	protected String getPasswordResetMailingSubject(User user, Context ctx) {
-		return Messages.get("playauthenticate.password.reset_email.subject");
+		return this.msg.preferred(ctx.request()).at("playauthenticate.password.reset_email.subject");
 	}
 
 	protected Body getPasswordResetMailingBody(String token, User user, Context ctx) {
@@ -342,7 +345,7 @@ public class MyUsernamePasswordAuthProvider
 
 	protected String getVerifyEmailMailingSubjectAfterSignup(User user,
 			Context ctx) {
-		return Messages.get("playauthenticate.password.verify_email.subject");
+		return this.msg.preferred(ctx.request()).at("playauthenticate.password.verify_email.subject");
 	}
 
 	protected String getEmailTemplate(String template,
@@ -357,7 +360,7 @@ public class MyUsernamePasswordAuthProvider
 					+ template
 					+ "_"
 					+ langCode
-					+ "' was not found! Trying to use English fallback template instead.");
+					+ "' was not found! Trying to use English fallback template instead.", e);
 		}
 		if (cls == null) {
 			try {
@@ -366,7 +369,7 @@ public class MyUsernamePasswordAuthProvider
 			} catch (ClassNotFoundException e) {
 				Logger.error("Fallback template: '" + template + "_"
 						+ EMAIL_TEMPLATE_FALLBACK_LANGUAGE
-						+ "' was not found either!");
+						+ "' was not found either!", e);
 			}
 		}
 		if (cls != null) {
@@ -378,11 +381,11 @@ public class MyUsernamePasswordAuthProvider
 						.toString();
 
 			} catch (NoSuchMethodException e) {
-				e.printStackTrace();
+				Logger.debug("could not find method: ", e);
 			} catch (IllegalAccessException e) {
-				e.printStackTrace();
+				Logger.debug("could not find method: ", e);
 			} catch (InvocationTargetException e) {
-				e.printStackTrace();
+				Logger.debug("could not find method: ", e);
 			}
 		}
 		return ret;

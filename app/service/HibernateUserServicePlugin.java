@@ -4,29 +4,31 @@ import java.util.Date;
 
 import javax.persistence.EntityManager;
 
-import models.User;
-import play.Application;
-import play.db.jpa.JPA;
-
+import com.feth.play.module.pa.PlayAuthenticate;
+import com.feth.play.module.pa.service.AbstractUserService;
 import com.feth.play.module.pa.user.AuthUser;
 import com.feth.play.module.pa.user.AuthUserIdentity;
-import com.feth.play.module.pa.service.UserServicePlugin;
 import com.google.inject.Inject;
 
 import constants.JpaConstants;
 import dao.UserHome;
+import models.User;
+import play.db.jpa.JPAApi;
 
-public class HibernateUserServicePlugin extends UserServicePlugin {
+public class HibernateUserServicePlugin extends AbstractUserService {
 
+	private final JPAApi jpaApi;
+	
 	@Inject
-	public HibernateUserServicePlugin(Application app) {
-		super(app);
+	public HibernateUserServicePlugin(final PlayAuthenticate auth, final JPAApi api) {
+		super(auth);
+		this.jpaApi = api;
 	}
 
 	@Override
 	public Object save(AuthUser authUser) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		UserHome userDao = new UserHome();
 		
@@ -45,7 +47,7 @@ public class HibernateUserServicePlugin extends UserServicePlugin {
 
 	@Override
 	public Object getLocalIdentity(AuthUserIdentity identity) {
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		// For production: Caching might be a good idea here...
 		// ...and dont forget to sync the cache when users get deactivated/deleted
@@ -63,7 +65,7 @@ public class HibernateUserServicePlugin extends UserServicePlugin {
 	@Override
 	public AuthUser merge(AuthUser newUser, AuthUser oldUser) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		UserHome userDao = new UserHome();
 		if (!oldUser.equals(newUser)) {
@@ -77,7 +79,7 @@ public class HibernateUserServicePlugin extends UserServicePlugin {
 	@Override
 	public AuthUser link(AuthUser oldUser, AuthUser newUser) {
 		
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		UserHome userDao = new UserHome();
 		
@@ -89,7 +91,7 @@ public class HibernateUserServicePlugin extends UserServicePlugin {
 	
 	@Override
 	public AuthUser update(AuthUser knownUser) {
-		EntityManager em = JPA.em(JpaConstants.DB);
+		EntityManager em = this.jpaApi.em(JpaConstants.DB);
 		
 		// User logged in again, bump last login date
 		UserHome userDao = new UserHome();

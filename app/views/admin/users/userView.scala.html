@@ -1,0 +1,87 @@
+@(targetUser: models.User, user: models.User)
+
+@import helper._
+
+@import views.html.bootstrap3._
+
+@scripts = {
+	
+	<script type="text/javascript">
+            $(function () {
+                $('#datetimepicker').datetimepicker();
+            });
+        </script>
+	
+}
+
+@views.html.admin.adminMain("Index", user, scripts) {
+<section class="content-header">
+	<h1> User <small>@targetUser.getFirstName @targetUser.getLastName</small></h1>
+	<ol class="breadcrumb">
+		<li>
+			<a href="@routes.Admin.index"><i class="fa fa-dashboard"></i> Home</a>
+		</li>
+		<li>
+			<a href="@routes.Admin.manageUsers"><i class="fa fa-envelope"></i> Manage users</a>
+		</li>
+		<li class="active">
+			@targetUser.getFirstName @targetUser.getLastName
+		</li>
+	</ol>
+</section>
+
+<section class="content">
+	<div class="well">
+		<table class="table table-striped table-bordered table-hover">
+			<tr>
+				<td>email</td>
+				<td>@targetUser.getEmail</td>
+			</tr>
+			<tr>
+				<td>firstname</td>
+				<td>@targetUser.getFirstName</td>
+			</tr>
+			<tr>
+				<td>lastname</td>
+				<td>@targetUser.getLastName</td>
+			</tr>
+			<tr>
+				<td>roles</td>
+				<td>@for(role <- targetUser.getSecurityRoles){ @role.getName,  }</td>
+			</tr>
+		</table>
+
+		@if(flash.containsKey("success")) {
+		<div class="well">
+			<div id="success-message" class="text-success">
+				@flash.get("success")
+			</div>
+		</div>
+		}
+		@if(flash.containsKey("error")) {
+		<div class="well">
+			<div id="error-message" class="text-danger">
+				@flash.get("error")
+			</div>
+		</div>
+		}
+		
+		<a href="@routes.Admin.editUser(targetUser.getId)">
+		<button type="button" class="btn btn-primary">
+			Edit User
+		</button> </a>
+		
+		@form(routes.Admin.deleteUser(targetUser.getId), 'style -> "display:inline", 'onsubmit -> "return confirm('Are you sure?')") {
+			<button id="submit" type="submit" value="Delete" class="btn btn-primary">
+				Delete
+			</button>
+		}
+		
+		<a href="@routes.Admin.manageUsers">
+		<button type="button" class="btn btn-secondary">
+			Back
+		</button> </a>
+	</div>
+</section>
+
+}

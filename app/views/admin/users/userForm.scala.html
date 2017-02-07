@@ -1,0 +1,62 @@
+@(userForm: Form[forms.AdminForm],
+roles: List[lib.BootstrapSelectKeyValue],
+user: models.User)
+
+@import helper._
+
+@views.html.admin.adminMain("Index", user) {
+<section class="content-header">
+	<h1> Create Message </h1>
+	<ol class="breadcrumb">
+		<li>
+			<a href="@routes.Admin.index"><i class="fa fa-dashboard"></i> Home</a>
+		</li>
+		<li>
+			<a href="@routes.Admin.manageUsers"><i class="fa fa-envelope"></i> Manage users</a>
+		</li>
+		<li class="active">
+			Create Message
+		</li>
+	</ol>
+</section>
+
+<section class="content">
+	<div class="well">
+
+		@form(routes.Admin.createUser(), 'enctype -> "multipart/form-data", 'class -> "form-horizontal") {
+		@userFields(userForm, roles)
+		<div class="form-group">
+			<div class="col-sm-offset-2 col-sm-10">
+				<button id="submit" type="submit" value="Submit" class="btn btn-primary">
+					Submit
+				</button>
+				
+				<a href="@routes.Admin.manageUsers">
+			<button type="button" class="btn btn-secondary">
+				Back
+			</button> </a>
+				<!-- <button id="cancel" class="btn cancel">
+					Cancel
+				</button> -->
+			</div>
+		</div>
+		}
+	</div>
+
+	@if(flash.containsKey("success")) {
+	<div class="well">
+		<div id="success-message" class="text-success">
+			@flash.get("success")
+		</div>
+	</div>
+	}
+	@if(flash.containsKey("error")) {
+	<div class="well">
+		<div id="error-message" class="text-danger">
+			@flash.get("error")
+		</div>
+	</div>
+	}
+</section>
+
+}

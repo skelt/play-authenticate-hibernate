@@ -1,0 +1,48 @@
+@(userForm: Form[forms.AdminForm],
+roles: List[lib.BootstrapSelectKeyValue])
+
+@import views.html.bootstrap3._
+
+<!-- http://ics-software-engineering.github.io/play-example-form/ -->
+<!-- http://ironsummitmedia.github.io/startbootstrap-sb-admin-2/pages/tables.html -->
+
+<fieldset>
+	<!-- Header -->
+	<div id="legend">
+		<legend>
+			Create a new message
+		</legend>
+	</div>
+
+	@text(userForm("email"),
+	label = "Email",
+	placeholder = "Email",
+	help = "Please enter the user email")
+
+	@text(userForm("firstName"),
+	label = "First Name",
+	placeholder = "first name",
+	help = "Please enter the users first name")
+
+	@text(userForm("lastName"),
+	label = "Last Name",
+	placeholder = "last name",
+	help = "Please enter the users last name")
+	
+	@password(userForm("password1"),
+	label = "Enter password",
+	placeholder = "Enter password",
+	help = "Please enter the users password")
+	
+	@password(userForm("password2"),
+	label = "Confirm password",
+	placeholder = "Confirm password",
+	help = "Please confirm the users password")
+	
+	@picker(userForm("roles"),
+	label = "Roles",
+	optionMap = roles,
+	isMultiple = true,
+	help = "Select user roles (use your Ctrl key to select many)")
+
+</fieldset>

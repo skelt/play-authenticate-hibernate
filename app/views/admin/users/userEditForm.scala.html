@@ -1,0 +1,104 @@
+@(userForm: Form[forms.AdminEditForm],
+roles: List[lib.BootstrapSelectKeyValue],
+user: models.User,
+userId: Integer)
+
+@import helper._
+
+@import views.html.bootstrap3._
+
+@views.html.admin.adminMain("Index", user) {
+<section class="content-header">
+	<h1> Create Message </h1>
+	<ol class="breadcrumb">
+		<li>
+			<a href="@routes.Admin.index"><i class="fa fa-dashboard"></i> Home</a>
+		</li>
+		<li>
+			<a href="@routes.Admin.manageUsers"><i class="fa fa-envelope"></i> Manage users</a>
+		</li>
+		<li class="active">
+			Create Message
+		</li>
+	</ol>
+</section>
+
+<section class="content">
+	<div class="well">
+
+		@form(routes.Admin.editUser(userId), 'enctype -> "multipart/form-data", 'class -> "form-horizontal") {
+		<fieldset>
+			<!-- Header -->
+			<div id="legend">
+				<legend>
+					Create a new message
+				</legend>
+			</div>
+
+			@text(userForm("email"),
+			label = "Email",
+			placeholder = "Email",
+			help = "Please enter the user email")
+
+			@text(userForm("firstName"),
+			label = "First Name",
+			placeholder = "first name",
+			help = "Please enter the users first name")
+
+			@text(userForm("lastName"),
+			label = "Last Name",
+			placeholder = "last name",
+			help = "Please enter the users last name")
+
+			@password(userForm("password1"),
+			label = "Enter password",
+			placeholder = "Enter password",
+			help = "Please enter the users password")
+
+			@password(userForm("password2"),
+			label = "Confirm password",
+			placeholder = "Confirm password",
+			help = "Please confirm the users password")
+
+			@picker(userForm("roles"),
+			label = "Roles",
+			optionMap = roles,
+			isMultiple = true,
+			help = "Select user roles (use your Ctrl key to select many)")
+
+		</fieldset>
+		<div class="form-group">
+			<div class="col-sm-offset-2 col-sm-10">
+				<button id="submit" type="submit" value="Save" class="btn btn-primary">
+					Save
+				</button>
+
+				<a href="@routes.Admin.viewUser(userId)">
+				<button type="button" class="btn btn-secondary">
+					Back
+				</button> </a>
+				<!-- <button id="cancel" class="btn cancel">
+				Cancel
+				</button> -->
+			</div>
+		</div>
+		}
+	</div>
+
+	@if(flash.containsKey("success")) {
+	<div class="well">
+		<div id="success-message" class="text-success">
+			@flash.get("success")
+		</div>
+	</div>
+	}
+	@if(flash.containsKey("error")) {
+	<div class="well">
+		<div id="error-message" class="text-danger">
+			@flash.get("error")
+		</div>
+	</div>
+	}
+</section>
+
+}

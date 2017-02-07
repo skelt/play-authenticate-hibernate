@@ -19,6 +19,10 @@ import javax.persistence.Table;
 @Table(name = "linked_account")
 public class LinkedAccount implements java.io.Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Integer id;
 	private User user;
 	private String providerUserId;
@@ -71,5 +75,4 @@ public class LinkedAccount implements java.io.Serializable {
 	public void setProviderKey(String providerKey) {
 		this.providerKey = providerKey;
 	}
-
 }

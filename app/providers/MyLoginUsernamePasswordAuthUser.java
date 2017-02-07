@@ -1,9 +1,7 @@
 package providers;
 
-import com.feth.play.module.pa.providers.password.DefaultUsernamePasswordAuthUser;
 
-public class MyLoginUsernamePasswordAuthUser extends
-		DefaultUsernamePasswordAuthUser {
+public class MyLoginUsernamePasswordAuthUser extends MyUsernamePasswordAuthUser {
 
 	/**
 	 * 
@@ -13,7 +11,7 @@ public class MyLoginUsernamePasswordAuthUser extends
 	 * The session timeout in seconds
 	 * Defaults to two weeks
 	 */
-	final static long SESSION_TIMEOUT = 24 * 14 * 3600;
+	final static long SESSION_TIMEOUT = 24L * 14 * 3600;
 	private long expiration;
 
 	/**
@@ -34,6 +32,11 @@ public class MyLoginUsernamePasswordAuthUser extends
 	@Override
 	public long expires() {
 		return expiration;
+	}
+	
+	@Override
+	public String getId() {
+		return super.getEmail();
 	}
 
 }

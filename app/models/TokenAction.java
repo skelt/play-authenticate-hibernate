@@ -27,6 +27,10 @@ import javax.persistence.UniqueConstraint;
 @Table(name = "token_action", uniqueConstraints = @UniqueConstraint(columnNames = "token"))
 public class TokenAction implements java.io.Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Integer id;
 	private User user;
 	private String token;

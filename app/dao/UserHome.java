@@ -3,22 +3,18 @@ package dao;
 // Generated Jul 4, 2015 5:57:00 PM by Hibernate Tools 4.3.1
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import models.LinkedAccount;
 import models.SecurityRole;
 import models.User;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import models.UserProfile;
+import play.Logger;
 import providers.MyUsernamePasswordAuthUser;
 
 import com.feth.play.module.pa.providers.password.UsernamePasswordAuthUser;
@@ -28,7 +24,7 @@ import com.feth.play.module.pa.user.EmailIdentity;
 import com.feth.play.module.pa.user.FirstLastNameIdentity;
 import com.feth.play.module.pa.user.NameIdentity;
 
-import controllers.Application;
+import exceptions.PlayAuthHibernateServiceException;
 
 /**
  * Home object for domain model class User.
@@ -36,8 +32,6 @@ import controllers.Application;
  * @author Hibernate Tools
  */
 public class UserHome {
-
-	private static final Log log = LogFactory.getLog(UserHome.class);
 	
 	public void persist(User transientInstance, EntityManager entityManager) {
 		
@@ -95,18 +89,20 @@ public class UserHome {
 	public User findById(Integer id, EntityManager entityManager) {
 		
 		try {
-			Query query = entityManager.createQuery("SELECT u FROM User u LEFT JOIN FETCH u.linkedAccounts WHERE u.id = :id");
+			Query query = entityManager.createQuery("SELECT u FROM User u LEFT JOIN FETCH u.linkedAccounts LEFT JOIN FETCH u.securityRoles WHERE u.id = :id");
 			query.setParameter("id", id);
 			
 			User user = (User) query.getSingleResult();
 			
 			return user;
-		} catch (NoResultException nr) {
+		}catch (NoResultException e) {
+			Logger.info("user not found");
 			return null;
-		} catch (RuntimeException re) {
-			log.error("get failed", re);
+		}
+		catch (Exception re) {
+			Logger.error("error: ", re);
 			throw re;
-		} 
+		}
 		
 		/*log.debug("getting User instance with id: " + id);
 		try {
@@ -135,11 +131,12 @@ public class UserHome {
 				a = dao.create(user, authUser.getProvider(), authUser.getId(), entityManager);
 				a.setUser(user);
 			} else {
-				throw new RuntimeException("Account not enabled for password usage");
+				throw new PlayAuthHibernateServiceException("Account not enabled for password usage");
 			}
 		}
 		
 		a.setProviderUserId(authUser.getHashedPassword());
+		a.getUser().setEmailValidated(true);
 		
 		dao.merge(a, entityManager);
 	}
@@ -181,8 +178,12 @@ public class UserHome {
 			User user = (User) query.getSingleResult();
 			
 			return user;
-		} catch (RuntimeException re) {
-			log.error("get failed", re);
+		}catch (NoResultException e) {
+			Logger.info("user not found");
+			return null;
+		}
+		catch (Exception re) {
+			Logger.error("error: ", re);
 			throw re;
 		}
 	}
@@ -197,13 +198,15 @@ public class UserHome {
 			User user = (User) query.getSingleResult();
 			
 			return user;
-		} catch (NoResultException nr) {
+		}catch (NoResultException e) {
+			Logger.info("user not found");
 			return null;
-		} catch (RuntimeException re) {
-			log.error("get failed", re);
+		}
+		catch (Exception re) {
+			Logger.error("error: ", re);
 			throw re;
-		} 
-	}
+		}
+	}    
 	
 	private User getAuthUserFind(AuthUserIdentity identity, EntityManager entityManager) {
 		
@@ -216,10 +219,11 @@ public class UserHome {
 			
 			return user;
 		}catch (NoResultException e) {
+			Logger.info("user not found");
 			return null;
 		}
-		catch (RuntimeException re) {
-			log.error("get failed", re);
+		catch (Exception re) {
+			Logger.error("error: ", re);
 			throw re;
 		}
 	}
@@ -236,10 +240,10 @@ public class UserHome {
 	}
 	
 	public User create(AuthUser authUser, EntityManager entityManager) {
-		return this.createByRole(authUser, controllers.Application.USER_ROLE, entityManager);
+		return this.createByRole(authUser, controllers.Application.USER_ROLE, null, entityManager);
 	}
 	
-	public User createByRole(AuthUser authUser, String roleName, EntityManager entityManager) {
+	public User createByRole(AuthUser authUser, String roleName, String tiUserId, EntityManager entityManager) {
 		User user = new User();
 		
 		SecurityRoleHome roleDao = new SecurityRoleHome();
@@ -249,10 +253,20 @@ public class UserHome {
 		Set<SecurityRole> roles = user.getSecurityRoles();
 		roles.add(role);
 		
+		UserProfileHome userProfileDao = new UserProfileHome();
+		
+		UserProfile userProfile = new UserProfile();
+		userProfile.setTiUserId(tiUserId);
+		
+		userProfile = userProfileDao.merge(userProfile, entityManager);
+		
 		user.setSecurityRoles(roles);
+		user.setUserProfile(userProfile);
 		
 		user.setActive(true);
 		user.setLastLogin(new Date());
+		user.setCreatedOn(new Date());
+		user.setUpdatedOn(new Date());
 
 		if (authUser instanceof EmailIdentity) {
 			EmailIdentity identity = (EmailIdentity) authUser;
@@ -314,6 +328,12 @@ public class UserHome {
 		
 		// do all other merging stuff here - like resources, etc.
 		currentUser.setLinkedAccounts(currentUserAccounts);
+		
+		Set<SecurityRole> roles = otherUser.getSecurityRoles();
+		
+		for(SecurityRole role: roles){
+			currentUser.getSecurityRoles().add(role);
+		}
 		
 		// deactivate the merged user that got added to this one
 		otherUser.setActive(false);

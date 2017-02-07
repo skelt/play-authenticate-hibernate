@@ -12,8 +12,8 @@ GET     /profile                    controllers.Application.profile
 GET     /login                      controllers.Application.login
 POST    /login                      controllers.Application.doLogin
 
-GET     /logout                     com.feth.play.module.pa.controllers.AuthenticateDI.logout
-GET     /authenticate/:provider     com.feth.play.module.pa.controllers.AuthenticateDI.authenticate(provider: String)
+GET     /logout                     com.feth.play.module.pa.controllers.Authenticate.logout
+GET     /authenticate/:provider     com.feth.play.module.pa.controllers.Authenticate.authenticate(provider: String)
 
 GET     /signup                     controllers.Application.signup
 POST    /signup                     controllers.Application.doSignup
@@ -43,5 +43,23 @@ POST    /accounts/merge             controllers.Account.doMerge
 GET     /login/password/forgot     controllers.Signup.forgotPassword(email: String ?= "")
 POST    /login/password/forgot     controllers.Signup.doForgotPassword
 
+
+# Admin
+POST       /admin/users/create              controllers.Admin.createUser
+POST       /admin/users/edit/:id     controllers.Admin.editUser(id: Integer)
+POST       /admin/users/delete/:id     controllers.Admin.deleteUser(id: Integer)
+GET        /admin/users/list                controllers.Admin.manageUsers
+GET        /admin/users/view/:id                controllers.Admin.viewUser(id: Integer)
+GET        /admin/users/create              controllers.Admin.createUser
+GET        /admin/users/edit/:id              controllers.Admin.editUser(id: Integer)
+GET        /admin                      controllers.Admin.index
+
+
+# API
+
+POST       /api/register                controllers.Api.register
+POST       /api/profile/update          controllers.Api.editProfile
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET     /uploads/*file       controllers.Application.file(file: String)
