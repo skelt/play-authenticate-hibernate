@@ -1,4 +1,4 @@
-SCET Play Template
+SCET Play Hibernate Template based on [https://github.com/joscha/play-authenticate](https://github.com/joscha/play-authenticate)
 
 [http://scet.co](http://scet.co)
 
